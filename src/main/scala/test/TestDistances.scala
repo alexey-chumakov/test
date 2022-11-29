@@ -26,6 +26,7 @@ object TestDistances extends AppBase {
     """{"way_id": "way4", "nodes": [1, 5]}"""
   ))
 
+  // Add simple UDF for distance calculation
   spark.udf.register("distance", functions.udf(distance(_, _, _, _)))
 
   // Explode and join (empty ways will be omitted)
@@ -34,16 +35,13 @@ object TestDistances extends AppBase {
 
   // Create a window over way_id and calculate distances between nodes
   val windowSpec = Window.partitionBy($"way_id").orderBy($"pos")
-  waysJoined
+  val distances = waysJoined
     .withColumn("prev_lat", functions.lag("lat", 1).over(windowSpec))
     .withColumn("prev_lon", functions.lag("lon", 1).over(windowSpec))
     .filter("prev_lon is not null AND prev_lat is not null")
     .withColumn("distance", functions.expr("distance(lat, lon, prev_lat, prev_lon)"))
     .groupBy("way_id").sum("distance")
-    .show()
 
-  private def distance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double = {
-    Math.sqrt(Math.pow(lat2 - lat1, 2) + Math.pow(lon2 - lon1, 2))
-  }
+  distances.show()
 
 }
