@@ -26,7 +26,7 @@ object TestDistances extends AppBase {
     """{"way_id": "way4", "nodes": [1, 5]}"""
   ))
 
-  // Add simple UDF for distance calculation
+  // Add UDF for naive distance calculation (just euclidean distance for testing)
   spark.udf.register("distance", functions.udf(distance(_, _, _, _)))
 
   // Explode and join (empty ways will be omitted)
